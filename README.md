@@ -1,8 +1,7 @@
 # SFDFuse
-Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Multi-Modality Image Fusion. (CVPR 2023)***
+Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Multi-Modality Image Fusion.***
 
-[Zixiang Zhao](https://zhaozixiang1228.github.io/), [Haowen Bai](), [Jiangshe Zhang](http://gr.xjtu.edu.cn/web/jszhang), [Yulun Zhang](https://yulunzhang.com/), [Shuang Xu](https://shuangxu96.github.io/), [Zudi Lin](https://zudi-lin.github.io/), [Radu Timofte](https://www.informatik.uni-wuerzburg.de/computervision/home/) and [Luc Van Gool](https://vision.ee.ethz.ch/people-details.OTAyMzM=.TGlzdC8zMjQ4LC0xOTcxNDY1MTc4.html).
-
+[Xupei Zhang](https:///)
 -[*[Paper]*](https://openaccess.thecvf.com/content/CVPR2023/html/Zhao_CDDFuse_Correlation-Driven_Dual-Branch_Feature_Decomposition_for_Multi-Modality_Image_Fusion_CVPR_2023_paper.html)  
 -[*[ArXiv]*](https://arxiv.org/abs/2104.06977)  
 -[*[Supplementary Materials]*](https://openaccess.thecvf.com/content/CVPR2023/supplemental/Zhao_CDDFuse_Correlation-Driven_Dual-Branch_CVPR_2023_supplemental.pdf)  
