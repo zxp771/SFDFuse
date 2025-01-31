@@ -27,22 +27,23 @@ Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Mu
 
 ## Abstract
 
-Multi-modality (MM) image fusion aims to render fused images that maintain the merits of different modalities, e.g., functional highlight and detailed textures. To tackle the challenge in modeling cross-modality features and decomposing desirable modality-specific and modality-shared features, we propose a novel Correlation-Driven feature Decomposition Fusion (CDDFuse) network. Firstly, CDDFuse uses Restormer blocks to extract cross-modality shallow features. We then introduce a dual-branch Transformer-CNN feature extractor with Lite Transformer (LT) blocks leveraging long-range attention to handle low-frequency global features and Invertible Neural Networks (INN) blocks focusing on extracting high-frequency local information. A correlation-driven loss is further proposed to make the low-frequency features correlated while the high-frequency features uncorrelated based on the embedded information. Then, the LT-based global fusion and INN-based local fusion layers output the fused image. Extensive experiments demonstrate that our CDDFuse achieves promising results in multiple fusion tasks, including infrared-visible image fusion and medical image fusion. We also show that CDDFuse can boost the performance in downstream infrared-visible semantic segmentation and object detection in a unified benchmark.
+Multi-modal image fusion (MMIF) integrates information from multiple imaging modalities to generate high-quality fused images, with applications spanning multiple fields. Recent advances in deep learning have led to Deep Feature Decomposition (DFD) methods that leverage autoencoder networks to extract and fuse hierarchical spatial features, which obtained more comprehensive and richer visual information to
+enhance the image fusion quality. However, these spatial-domain-focused methods remain limited in their ability to preserve essential details in regions of high grayscale variation and to balance global and local feature representations effectively. To overcome these challenges, this paper introduces a novel Spatial-Frequency feature Decomposition and Fusion (SFDFuse) network for MMIF, which incorporates both spatial and frequency domain features to enhance fusion quality by modified the spatial feature decompose modules and introduced the frequency feature decompose module. Moreover, this paper designed different feature fusion strategies to provide more efficient feature information complementation and information consistency representation for the cross domain and cross scale features. Extensive experiments demonstrate that SFDFuse achieves superior fusion performance, offering clearer scene representation and improved the detail preservation for the downstream vision tasks in a unified benchmark.
 
 ## 🌐 Usage
 
 ### ⚙ Network Architecture
 
-Our CDDFuse is implemented in ``net.py``.
+Our SFDFuse is implemented in ``net.py``.
 
 ### 🏊 Training
 **1. Virtual Environment**
 ```
 # create virtual environment
 conda create -n cddfuse python=3.8.10
-conda activate cddfuse
+conda activate SFDfuse
 # select pytorch version yourself
-# install cddfuse requirements
+# install SFDfuse requirements
 pip install -r requirements.txt
 ```
 
@@ -58,7 +59,7 @@ python dataprocessing.py
 ``` 
 and the processed training dataset is in ``'./data/MSRS_train_imgsize_128_stride_200.h5'``.
 
-**4. CDDFuse Training**
+**4. SFDFuse Training**
 
 Run 
 ```
@@ -70,7 +71,7 @@ and the trained model is available in ``'./models/'``.
 
 **1. Pretrained models**
 
-Pretrained models are available in ``'./models/CDDFuse_IVF.pth'`` and ``'./models/CDDFuse_MIF.pth'``, which are responsible for the Infrared-Visible Fusion (IVF) and Medical Image Fusion (MIF) tasks, respectively. 
+Pretrained models are available in ``'./models/SFDFuse_IVF.pth'`` , which is responsible for the Infrared-Visible Fusion (IVF). 
 
 **2. Test datasets**
 
@@ -82,13 +83,9 @@ Unfortunately, since the size of **MSRS dataset** for IVF is 500+MB, we can not 
 
 If you want to infer with our CDDFuse and obtain the fusion results in our paper, please run 
 ```
-python test_IVF.py
+python test.py
 ``` 
-for Infrared-Visible Fusion and 
-```
-python test_MIF.py
-``` 
-for Medical Image Fusion. 
+for Infrared-Visible Fusion
 
 The testing results will be printed in the terminal. 
 
@@ -109,35 +106,10 @@ CDDFuse         7.44    54.67   16.36   2.3     1.81    0.69    0.52    0.98
 ```
 which can match the results in Table 1 in our original paper.
 
-The output for ``'test_MIF.py'`` is:
-
-```
-================================================================================
-The test result of MRI_CT :
-                 EN      SD      SF      MI     SCD     VIF     Qabf    SSIM
-CDDFuse_IVF     4.83    88.59   33.83   2.24    1.74    0.5     0.59    1.31
-CDDFuse_MIF     4.88    79.17   38.14   2.61    1.41    0.61    0.68    1.34
-================================================================================
-
-================================================================================
-The test result of MRI_PET :
-                 EN      SD      SF      MI     SCD     VIF     Qabf    SSIM
-CDDFuse_IVF     4.23    81.69   28.04   1.87    1.82    0.66    0.65    1.46
-CDDFuse_MIF     4.22    70.74   29.57   2.03    1.69    0.71    0.71    1.49
-================================================================================
-
-================================================================================
-The test result of MRI_SPECT :
-                 EN      SD      SF      MI     SCD     VIF     Qabf    SSIM
-CDDFuse_IVF     3.91    71.81   20.66   1.9     1.87    0.65    0.68    1.45
-CDDFuse_MIF     3.9     58.31   20.87   2.49    1.35    0.97    0.78    1.48
-================================================================================
-```
-which can match the results in Table 5 in our original paper.
 
 ## 🙌 CDDFuse
 
-### Illustration of our CDDFuse model.
+### Illustration of our SFDFuse model.
 
 <img src="image//Workflow.png" width="90%" align=center />
 
