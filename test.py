@@ -15,35 +15,27 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "6"
 ckpt_path=r"models/SFDFuse_01-31-02-13.pth"
 for dataset_name in ["MSRS","TNO","RoadScene","M3FD"]:
     print("\n"*2+"="*80)
-    model_name="CDDFuse    "
+    model_name="SFDFuse    "
     print("The test result of "+dataset_name+' :')
     test_folder=os.path.join('test_img',dataset_name)
     test_out_folder=os.path.join('test_result',dataset_name)#+'out')
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    Encoder = nn.DataParallel(Restormer_Encoder()).to(device)
-    Decoder = nn.DataParallel(Restormer_Decoder_Phase()).to(device)
-    #BaseFuseLayer = nn.DataParallel(BaseFeatureExtraction(dim=64, num_heads=8)).to(device)
-    #BaseFuseLayer = nn.DataParallel(BaseFeatureExtraction_Pool(dim=64)).to(device)
+    Encoder = nn.DataParallel(Encoder()).to(device)
+    Decoder = nn.DataParallel(Decoder()).to(device)
     BaseFuseLayer = nn.DataParallel(FeatureInteractionBlock(dim=64,num_heads=8,init_fusion=True)).to(device)
-    #DetailFuseLayer = nn.DataParallel(DEABlockTrain(conv=default_conv,dim=64,kernel_size=3)).to(device)
-    #DetailFuseLayer = nn.DataParallel(WTConv2d(in_channels=64, out_channels=64, kernel_size=3, wt_levels=2)).to(device)
-    #DetailFuseLayer = nn.DataParallel(DetailFeatureExtraction(num_layers=1)).to(device)
-    #DetailFuseLayer = nn.DataParallel(FeatureInteractionBlock(dim=64, num_heads=8)).to(device)
     DetailFuseLayer = nn.DataParallel(FeatureInteractionBlock(dim=64, num_heads=8,init_fusion=False)).to(device)
 
 
     Encoder.load_state_dict(torch.load(ckpt_path)['DIDF_Encoder'])
-    Decoder.load_state_dict(torch.load(ckpt_path)['DIDF_Decoder_Phase'])
+    Decoder.load_state_dict(torch.load(ckpt_path)['DIDF_Decoder'])
     BaseFuseLayer.load_state_dict(torch.load(ckpt_path)['BaseFuseLayer'])
     DetailFuseLayer.load_state_dict(torch.load(ckpt_path)['DetailFuseLayer'])
-    #FuseLayer.load_state_dict(torch.load(ckpt_path)['FuseLayer'])
 
     Encoder.eval()
     Decoder.eval()
     BaseFuseLayer.eval()
     DetailFuseLayer.eval()
-    # FuseLayer.eval()
 
     with torch.no_grad():
         for img_name in os.listdir(os.path.join(test_folder,"ir")):
@@ -56,17 +48,16 @@ for dataset_name in ["MSRS","TNO","RoadScene","M3FD"]:
 
             feature_VIS_ll, feature_VIS_detail = Encoder(data_VIS)
             feature_I_ll, feature_I_detail = Encoder(data_IR)
-            #feature_F_ll = BaseFuseLayer(feature_VIS_ll + feature_I_ll)  # (feature_I_B + feature_V_B)/2
             feature_F_ll = BaseFuseLayer(feature_VIS_ll,feature_I_ll)
-            #feature_F_detail = DetailFuseLayer((feature_VIS_detail + feature_I_detail))
-            # feature_F_ll = FuseLayer(feature_VIS_ll, feature_I_ll)
-            #feature_F_detail = DetailFuseLayer(feature_VIS_detail + feature_I_detail)
             feature_F_detail = DetailFuseLayer(feature_VIS_detail, feature_I_detail)
 
             data_Fuse, _ = Decoder(data_VIS, feature_F_ll, feature_F_detail)
             data_Fuse = (data_Fuse-torch.min(data_Fuse))/(torch.max(data_Fuse)-torch.min(data_Fuse))
             fi = np.squeeze((data_Fuse * 255).cpu().numpy())
             img_save(fi.astype(np.uint8), img_name.split(sep='.')[0], test_out_folder)
+        
+    
+    #for rgb fusion results
         # for img_name in os.listdir(os.path.join(test_folder, 'ir')):
         #     data_IR = image_read_cv2(os.path.join(test_folder, "ir", img_name), mode='GRAY')[
         #                   np.newaxis, np.newaxis, ...] / 255.0
