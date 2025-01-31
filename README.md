@@ -9,8 +9,6 @@ Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Mu
 
 ## Update
 - [2025/1] Release inference code for infrared-visible image fusion, Training codes and config files are public available.
-- [2023/4] Release inference code for infrared-visible image fusion and medical image fusion.
-
 
 ## Citation
 
