@@ -13,14 +13,7 @@ Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Mu
 ## Citation
 
 ```
-@InProceedings{Zhao_2023_CVPR,
-    author    = {Zhao, Zixiang and Bai, Haowen and Zhang, Jiangshe and Zhang, Yulun and Xu, Shuang and Lin, Zudi and Timofte, Radu and Van Gool, Luc},
-    title     = {CDDFuse: Correlation-Driven Dual-Branch Feature Decomposition for Multi-Modality Image Fusion},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-    month     = {June},
-    year      = {2023},
-    pages     = {5906-5916}
-}
+
 ```
 
 ## Abstract
