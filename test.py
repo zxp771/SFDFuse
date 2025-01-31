@@ -1,4 +1,4 @@
-from net_fft_detail_01201 import Restormer_Encoder, Restormer_Decoder_Phase,DetailFeatureExtraction,BaseFeatureExtraction_Pool,FeatureInteractionBlock
+from net import Encoder, Decoder,FeatureInteractionBlock
 import os
 import numpy as np
 from utils.Evaluator import Evaluator
@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.CRITICAL)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "6"
-ckpt_path=r"models/CDDFuse_01-31-02-13.pth"
+ckpt_path=r"models/SFDFuse_01-31-02-13.pth"
 for dataset_name in ["MSRS","TNO","RoadScene","M3FD"]:
     print("\n"*2+"="*80)
     model_name="CDDFuse    "
