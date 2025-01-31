@@ -31,7 +31,7 @@ Our SFDFuse is implemented in ``net.py``.
 **1. Virtual Environment**
 ```
 # create virtual environment
-conda create -n cddfuse python=3.8.10
+conda create -n SFDfuse python=3.8.10
 conda activate SFDfuse
 # select pytorch version yourself
 # install SFDfuse requirements
