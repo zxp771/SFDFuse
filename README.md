@@ -2,9 +2,9 @@
 Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Multi-Modality Image Fusion.***
 
 [Xupei Zhang](https:///)
--[*[Paper]*](https://openaccess.thecvf.com/content/CVPR2023/html/Zhao_CDDFuse_Correlation-Driven_Dual-Branch_Feature_Decomposition_for_Multi-Modality_Image_Fusion_CVPR_2023_paper.html)  
--[*[ArXiv]*](https://arxiv.org/abs/2104.06977)  
--[*[Supplementary Materials]*](https://openaccess.thecvf.com/content/CVPR2023/supplemental/Zhao_CDDFuse_Correlation-Driven_Dual-Branch_CVPR_2023_supplemental.pdf)  
+-[*[Paper]*]()  
+-[*[ArXiv]*]()  
+-[*[Supplementary Materials]*]()  
 
 
 ## Update
@@ -62,7 +62,7 @@ and the trained model is available in ``'./models/'``.
 
 **1. Pretrained models**
 
-Pretrained models are available in ``'./models/SFDFuse_IVF.pth'`` , which is responsible for the Infrared-Visible Fusion (IVF). 
+Pretrained models are available in ``'./models/SFDFuse_best.pth'`` , which is responsible for the Infrared-Visible Fusion (IVF). 
 
 **2. Test datasets**
 
@@ -98,7 +98,7 @@ CDDFuse         7.44    54.67   16.36   2.3     1.81    0.69    0.52    0.98
 which can match the results in Table 1 in our original paper.
 
 
-## 🙌 CDDFuse
+## 🙌 SFDFuse
 
 ### Illustration of our SFDFuse model.
 
