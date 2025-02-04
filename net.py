@@ -14,7 +14,26 @@ from functools import partial
 
 from utils import wavelet
 
-
+def drop_path(x, drop_prob: float = 0., training: bool = False):
+    """
+    Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
+    This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
+    the original name is misleading as 'Drop Connect' is a different form of dropout in a separate paper...
+    See discussion: https://github.com/tensorflow/tpu/issues/494#issuecomment-532968956 ... I've opted for
+    changing the layer and argument names to 'drop path' rather than mix DropConnect as a layer name and use
+    'survival rate' as the argument.
+    """
+    if drop_prob == 0. or not training:
+        return x
+    keep_prob = 1 - drop_prob
+    # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)
+    random_tensor = keep_prob + \
+                    torch.rand(shape, dtype=x.dtype, device=x.device)
+    random_tensor.floor_()  # binarize
+    output = x.div(keep_prob) * random_tensor
+    return output
+######################################################
 class DropPath(nn.Module):
     """
     Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
@@ -67,6 +86,37 @@ class AttentionBase(nn.Module):
         out = self.proj(out)
         return out
 
+
+class Mlp(nn.Module):
+    """
+    MLP as used in Vision Transformer, MLP-Mixer and related networks
+    """
+
+    def __init__(self,
+                 in_features,
+                 hidden_features=None,
+                 ffn_expansion_factor=2,
+                 bias=False):
+        super().__init__()
+        hidden_features = int(in_features * ffn_expansion_factor)
+
+        self.project_in = nn.Conv2d(
+            in_features, hidden_features * 2, kernel_size=1, bias=bias)
+
+        self.dwconv = nn.Conv2d(hidden_features * 2, hidden_features * 2, kernel_size=3,
+                                stride=1, padding=1, groups=hidden_features, bias=bias)
+
+        self.project_out = nn.Conv2d(
+            hidden_features, in_features, kernel_size=1, bias=bias)
+
+    def forward(self, x):
+        x = self.project_in(x)
+        x1, x2 = self.dwconv(x).chunk(2, dim=1)
+        x = F.gelu(x1) * x2
+        x = self.project_out(x)
+        return x
+
+
 class BaseFeatureExtraction(nn.Module):
     def __init__(self,
                  dim,
@@ -77,7 +127,9 @@ class BaseFeatureExtraction(nn.Module):
         self.norm1 = LayerNorm(dim, 'WithBias')
         self.attn = AttentionBase(dim, num_heads=num_heads, qkv_bias=qkv_bias, )
         self.norm2 = LayerNorm(dim, 'WithBias')
-        self.mlp = FeedForward_out(dim, ffn_expansion_factor,bias=False)
+        self.mlp = Mlp(in_features=dim,
+                       ffn_expansion_factor=ffn_expansion_factor, )
+        #self.mlp = FeedForward_out(dim, ffn_expansion_factor,bias=False)
 
     def forward(self, x):
         x = x + self.attn(self.norm1(x))#x = x + self.attn(self.norm1(x))
@@ -128,6 +180,7 @@ class SepConv(nn.Module):
         self.dwconv = nn.Conv2d(
             med_channels, med_channels, kernel_size=kernel_size,
             padding=padding, groups=med_channels, bias=bias) # depthwise conv
+        #self.deconv = DEConv(dim=med_channels,kernel_size=kernel_size,padding=padding)
         self.act2 = act2_layer()
         self.pwconv2 = nn.Conv2d(med_channels, dim, 1, bias=False)#nn.Linear(med_channels, dim, bias=bias)
 
@@ -135,10 +188,62 @@ class SepConv(nn.Module):
         res = x
         x = self.pwconv1(x)
         x = self.act1(x)
+        #x = x.permute(0, 3, 1, 2)
         x = self.dwconv(x)
+        #x = self.deconv(x)
+        #x = x.permute(0, 2, 3, 1)
         x = self.act2(x)
         x = self.pwconv2(x)
         return x + res
+
+class Mlp_meta(nn.Module):
+    """ MLP as used in MetaFormer models, eg Transformer, MLP-Mixer, PoolFormer, MetaFormer baslines and related networks.
+    Mostly copied from timm.
+    """
+    def __init__(self, dim, mlp_ratio=4, out_features=None, act_layer=SquaredReLU, drop=0., bias=False, **kwargs):
+        super().__init__()
+        in_features = dim
+        out_features = out_features or in_features
+        hidden_features = int(mlp_ratio * in_features)
+        drop_probs = to_2tuple(drop)
+
+        self.fc1 = nn.Conv2d(in_features, hidden_features, kernel_size=1,bias=bias)
+        self.act = act_layer()
+        self.drop1 = nn.Dropout(drop_probs[0])
+        self.fc2 = nn.Conv2d(hidden_features, out_features,kernel_size=1, bias=bias)
+        self.drop2 = nn.Dropout(drop_probs[1])
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.act(x)
+        x = self.drop1(x)
+        x = self.fc2(x)
+        #x = self.drop2(x)
+        return x
+
+class MlpHead(nn.Module):
+    """ MLP classification head
+    """
+    def __init__(self, dim, mlp_ratio=4, act_layer=SquaredReLU,#nn.GELU,SquaredReLU
+        head_dropout=0.):
+        super().__init__()
+        hidden_features = int(mlp_ratio * dim)
+        self.fc1 = nn.Conv2d(dim, hidden_features, 1, bias=False)#nn.Linear(dim, hidden_features, bias=bias)
+        self.act = act_layer()
+        self.norm = LayerNorm(hidden_features, 'WithBias')
+        self.fc2 = nn.Conv2d(hidden_features, dim, 1, bias=False)#nn.Linear(hidden_features, dim, bias=bias)
+        self.head_dropout = nn.Dropout(head_dropout)
+
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.act(x)
+        #x = self.head_dropout(x)
+        x = self.norm(x)
+        x = self.head_dropout(x)
+        x = self.fc2(x)
+
+        return x
 
 class ConvFormer(nn.Module):
     def __init__(self, dim, drop_path=0.1,
@@ -149,7 +254,8 @@ class ConvFormer(nn.Module):
         self.norm1 = LayerNorm(dim, 'WithBias')
         self.token_mixer = SepConv(dim)  # vits是msa，MLPs是mlp，这个用pool来替代
         self.norm2 = LayerNorm(dim, 'WithBias')
-        self.mlp = FeedForward_Duals(dim=dim, ffn_expansion_factor=2, bias=False)
+        self.mlp = MlpHead(dim=dim) #Mlp_meta  FeedForward_Duals
+        #self.mlp = FeedForward_Duals(dim=dim, ffn_expansion_factor=2, bias=bias)
 
         # The following two techniques are useful to train deep PoolFormers.
         self.drop_path = DropPath(drop_path) if drop_path > 0. \
@@ -177,6 +283,8 @@ class ConvFormer(nn.Module):
         return x
 
 #############################################################################
+
+
 class InvertedResidualBlock(nn.Module):
     def __init__(self, inp, oup, expand_ratio):
         super(InvertedResidualBlock, self).__init__()
@@ -185,7 +293,10 @@ class InvertedResidualBlock(nn.Module):
             # pw
             nn.Conv2d(inp, hidden_dim, 1, bias=False),
             # nn.BatchNorm2d(hidden_dim),
-            nn.ReLU6(inplace=True), 
+            nn.ReLU6(inplace=True),  #LeakyReLU
+            # dw
+            # nn.ReflectionPad2d(1),
+            # nn.Conv2d(hidden_dim, hidden_dim, 3, groups=hidden_dim, bias=False),
             #detail enhancement
             DEConv(hidden_dim),
             # nn.BatchNorm2d(hidden_dim),
@@ -198,7 +309,8 @@ class InvertedResidualBlock(nn.Module):
 
     def forward(self, x):
         return self.bottleneckBlock(x)
-        
+
+
 class DetailNode(nn.Module):
     def __init__(self):
         super(DetailNode, self).__init__()
@@ -220,6 +332,7 @@ class DetailNode(nn.Module):
         z1 = z1 * torch.exp(self.theta_rho(z2)) + self.theta_eta(z2)
         return z1, z2
 
+
 class DetailFeatureExtraction(nn.Module):
     def __init__(self, num_layers=3):
         super(DetailFeatureExtraction, self).__init__()
@@ -232,7 +345,31 @@ class DetailFeatureExtraction(nn.Module):
             z1, z2 = layer(z1, z2)
         return torch.cat((z1, z2), dim=1)
 
-##########################################################################################
+##################
+
+class DEABlockTrain(nn.Module):
+    def __init__(self, conv, dim, kernel_size, reduction=8):
+        super(DEABlockTrain, self).__init__()
+        self.conv1 = DEConv(dim)
+        self.act1 = nn.ReLU(inplace=True)
+        self.conv2 = conv(dim, dim, kernel_size, bias=True)
+        self.sa = SpatialAttention()
+        self.ca = ChannelAttention(dim, reduction)
+        self.pa = PixelAttention(dim)
+
+    def forward(self, x):
+        res = self.conv1(x)
+        res = self.act1(res)
+        res = res + x
+        res = self.conv2(res)
+        cattn = self.ca(res)
+        sattn = self.sa(res)
+        pattn1 = sattn + cattn
+        pattn2 = self.pa(res, pattn1)
+        res = res * pattn2
+        res = res + x
+        return res
+
 
 class SpatialAttention(nn.Module):
     def __init__(self):
@@ -296,11 +433,26 @@ class PixelAttention(nn.Module):
         pattn2 = self.sigmoid(pattn2)
         return pattn2
 
+class DEBlockTrain(nn.Module):
+    def __init__(self, conv, dim, kernel_size):
+        super(DEBlockTrain, self).__init__()
+        self.conv1 = DEConv(dim)
+        self.act1 = nn.ReLU(inplace=True)
+        self.conv2 = conv(dim, dim, kernel_size, bias=True)
+
+    def forward(self, x):
+        res = self.conv1(x)
+        res = self.act1(res)
+        res = res + x
+        res = self.conv2(res)
+        res = res + x
+        return res
+
 class GLFusion(nn.Module):
     def __init__(self, dim, reduction=8):
         super(CGAFusion, self).__init__()
         self.sa = SpatialAttention()
-        self.ca = ChannelAttention(dim*2, reduction)
+        self.ca = ChannelAttention(dim*2, reduction) #ChannelAttention_am
         self.pa = PixelAttention(dim*2)
         self.conv = nn.Conv2d(dim*2, dim, 1, bias=True)
         self.sigmoid = nn.Sigmoid()
@@ -308,14 +460,18 @@ class GLFusion(nn.Module):
         self.mish = nn.Mish()
 
     def forward(self, x, y):
-        initial = torch.cat([x,y],dim=1)#
+        initial = torch.cat([x,y],dim=1)#x + y
         cattn = self.ca(initial)#initial
         sattn = self.sa(initial)#initial
         pattn1 = sattn + cattn
         #pattn1 = torch.cat([cattn,sattn],dim=1)
-        pattn2 = self.gelu(self.pa(initial, pattn1))
+        pattn2 = self.gelu(self.pa(initial, pattn1))#sigmoid gelu mish
+        #pattn2 = self.pa(initial, pattn1)
         result = initial * pattn2  #glue
+        #result = self.gelu(initial) * pattn2
         return self.conv(result + initial)
+        #result = initial + pattn2 * x + (1 - pattn2) * y
+        #result = self.conv(result)
 
 class Conv2d_cd(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1,
@@ -445,7 +601,41 @@ class DEConv(nn.Module):
 
         return res
 
-##########################################################################
+#========================================
+class UpSampleConv(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, upsample_factor):
+        super(UpSampleConv, self).__init__()
+        self.upsample_factor = upsample_factor
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=1, padding=kernel_size//2)
+
+    def forward(self, x):
+        # 先使用最近邻插值或双线性插值进行上采样雙三
+        x = F.interpolate(x, scale_factor=self.upsample_factor, mode='bicubic', align_corners=False)
+        # 然后通过卷积进行平滑
+        x = self.conv(x)
+        return x
+
+#=====================================================
+class SubPixelCNN(nn.Module):
+    def __init__(self, upscale_factor):
+        super(SubPixelCNN, self).__init__()
+
+        # 进行卷积，增加通道数为 upscale_factor^2 倍，这里为 2^2 = 4倍
+        # self.conv = nn.Conv2d(in_channels=1, out_channels=4 * (upscale_factor ** 2),
+        #                       kernel_size=3, stride=1, padding=1)
+        # PixelShuffle层：重排特征图的通道以形成高分辨率的图像
+        self.pixel_shuffle = nn.PixelShuffle(upscale_factor)
+
+        # 激活函数
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        # x = self.conv(x)
+        x = self.pixel_shuffle(x)
+        x = self.relu(x)
+        return x
+#==================================================
+
 ## Layer Norm
 def to_3d(x):
     return rearrange(x, 'b c h w -> b (h w) c')
@@ -505,7 +695,8 @@ class LayerNorm(nn.Module):
 
 
 ##########################################################################
-## Global feature Gated-FNN (GGFNN)
+
+## Global features Gated-CNN (GCNN)
 class FeedForward_out(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
         super(FeedForward_out, self).__init__()
@@ -537,7 +728,7 @@ class FeedForward_out(nn.Module):
         x = self.project_out(x)
         return x
 
-## Detail feature Gated FNN (DGFNN)
+## Detail feature Gated Feed-Forward Network (DsGFF)
 class FeedForward_Duals(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
         super(FeedForward_Duals, self).__init__()
@@ -604,6 +795,8 @@ class Attention(nn.Module):
 
         out = self.project_out(out)
         return out
+#############################################
+
 ##########################################################################
 class TransformerBlock(nn.Module):
     def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
@@ -620,6 +813,7 @@ class TransformerBlock(nn.Module):
 
         return x
 
+
 ##########################################################################
 ## Overlapped image patch embedding with 3x3 Conv
 class OverlapPatchEmbed(nn.Module):
@@ -633,8 +827,9 @@ class OverlapPatchEmbed(nn.Module):
         x = self.proj(x)
         return x
 
+##########################################################################
 #########################################################################
-##====================frequency domain decomposation
+
 class WTConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, wt_levels=1, wt_type='db1'):
         super(WTConv2d, self).__init__()
@@ -662,11 +857,9 @@ class WTConv2d(nn.Module):
         curr_x_hh = curr_x_h[:,:,2,:,:]
 
         return curr_x_ll,curr_x_lh,curr_x_hl,curr_x_hh
-#================================================================================================
-
 
 #================================================================================================
-#==============learning upsample for high frequency features
+#==============learning upsample ICCV
 def normal_init(module, mean=0, std=1, bias=0):
     if hasattr(module, 'weight') and module.weight is not None:
         nn.init.normal_(module.weight, mean, std)
@@ -743,7 +936,7 @@ class DySample(nn.Module):
         return self.forward_lp(x)
 
 #########################################################################
-######CSFF Module
+
 class CrossAttention(nn.Module):
     def __init__(self, dim, num_heads, bias):
         super().__init__()
@@ -820,8 +1013,13 @@ class FeatureInteractionBlock(nn.Module):
         self.attention = CrossAttention(dim, num_heads, bias)
         self.norm2 = LayerNorm(dim, LayerNorm_type)
         if init_fusion:
+            #self.ffn = Mlp(in_features=dim,ffn_expansion_factor=1, )
+            #self.ffn = MLP(dim=dim,mlp_ratio=4,)
+            #self.ffn = MlpHead(dim=dim,mlp_ratio=4,)
+            #self.ffn = FeedForward_Duals(dim, ffn_expansion_factor, bias)
             self.ffn = FeedForward_out(dim, ffn_expansion_factor, bias)
         else:
+            #self.ffn = FeedForward_Dual(dim, ffn_expansion_factor, bias)
             self.ffn = FeedForward_Duals(dim, ffn_expansion_factor, bias)
 
     def forward(self, x, y):
@@ -834,7 +1032,17 @@ class FeatureInteractionBlock(nn.Module):
 def default_conv(in_channels, out_channels, kernel_size, bias=True):
     return nn.Conv2d(in_channels, out_channels, kernel_size, padding=(kernel_size // 2), bias=bias)
 
-class Encoder(nn.Module):
+class LocalFeatureExtraction(nn.Module):
+    def __init__(self,
+                 dim=64,
+                 num_blocks=2,  #3
+                 ):
+        super(LocalFeatureExtraction, self).__init__()
+        self.Extraction = nn.Sequential(*[DEBlockTrain(default_conv,dim=dim,kernel_size=3) for i in range(num_blocks)])
+    def forward(self, x):
+        return self.Extraction(x)
+
+class Restormer_Encoder(nn.Module):
 
     def __init__(self,
                  inp_channels=1,
@@ -850,14 +1058,30 @@ class Encoder(nn.Module):
 
         self.patch_embed = OverlapPatchEmbed(inp_channels, dim)
 
+        # self.encoder_level1 = nn.Sequential(
+        #     *[TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
+        #                        bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0])])
+
         self.encoder_level1 = nn.Sequential(*[TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
                                bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0]//2)]
                                             ,*[ConvFormer(dim=dim) for i in range(num_blocks[0]//2)])
 
+        # self.encoder_level1 = nn.Sequential(
+        #     *[Conv2Former(dim=dim) for i in range(num_blocks[0] // 2)],
+        #     *[TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
+        #                        bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0] // 2)])
+
+        # self.encoder_level1 = nn.Sequential(
+        #     *[ConvFormer(dim=dim) for i in range(num_blocks[0] // 2)],
+        #     *[TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
+        #                        bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0] // 2)])
+
 
         self.baseFeature = BaseFeatureExtraction(dim=dim, num_heads=heads[2])
+        #self.baseFeature = BaseFeatureExtraction_Pool(dim=dim)
         self.FreFeature = WTConv2d(in_channels=dim, out_channels=dim)
         self.detailFeature = DetailFeatureExtraction()
+        #self.localFeature = LocalFeatureExtraction()
         self.upsample1 = nn.Sequential(
            nn.ConvTranspose2d(int(dim*3), int(dim), kernel_size=2, stride=2),
            nn.LeakyReLU(),
@@ -882,13 +1106,14 @@ class Encoder(nn.Module):
         out_enc_level1 = self.encoder_level1(inp_enc_level1)
         base_feature = self.baseFeature(out_enc_level1)
         detail_feature = self.detailFeature(out_enc_level1)
+        #detail_feature = self.localFeature(out_enc_level1)
         base_feature = self.init_fusion_b(base_feature,fre_lo)
         detail_feature = self.init_fusion_d(detail_feature, fre_hi)
 
         return base_feature, detail_feature#self.detailFeature(detail_feature)
 
 
-class Decoder(nn.Module):
+class Restormer_Decoder_Phase(nn.Module):
     def __init__(self,
                  inp_channels=1,
                  out_channels=1,
@@ -901,22 +1126,38 @@ class Decoder(nn.Module):
 
                  ):
 
-        super(Decoder, self).__init__()
-
+        super(Restormer_Decoder_Phase, self).__init__()
+        self.reduce_channel = nn.Conv2d(int(dim*2), int(dim), kernel_size=1, bias=bias)
+        # self.encoder_level2 = nn.Sequential(*[TransformerBlock(dim=dim, num_heads=heads[1], ffn_expansion_factor=ffn_expansion_factor,
+        #                                     bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[1])])
 
         self.encoder_level2 = nn.Sequential(*[TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
                                bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0]//2)]
                                             ,*[ConvFormer(dim=dim) for i in range(num_blocks[0]//2)])
+
+        # self.encoder_level2 = nn.Sequential(
+        #     *[Conv2Former(dim=dim) for i in range(num_blocks[0] // 2)],
+        #     *[TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
+        #                        bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0] // 2)])
+
+        # self.encoder_level2 = nn.Sequential(
+        #     *[ConvFormer(dim=dim) for i in range(num_blocks[0] // 2)],
+        #     *[TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
+        #                        bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_blocks[0] // 2)])
+
 
 
         self.output = nn.Sequential(
             nn.Conv2d(int(dim), int(dim)//2, kernel_size=3,
                       stride=1, padding=1, bias=bias),
             nn.LeakyReLU(),
+            #nn.GELU(),
+            #nn.SiLU(),
             nn.Conv2d(int(dim)//2, out_channels, kernel_size=3,
                       stride=1, padding=1, bias=bias),)
         self.sigmoid = nn.Sigmoid()
-        self.fusion1 = GLFusion(dim=dim)
+        self.fusion1 = CGAFusion(dim = dim)
+        self.fusion2 = GLFusion(dim=dim)
 
     def forward(self, inp_img, feature_ll, feature_detail):
 
@@ -929,6 +1170,8 @@ class Decoder(nn.Module):
         else:
             inp_img = inp_img[:,:,:inp_img.shape[2] - 1,:inp_img.shape[3] - 1]
         out_enc_level0 = self.fusion1(feature_ll, feature_detail)
+        #out_enc_level0 = self.reduce_channel(out_enc_level0)
+        #out_enc_level0 = self.fusion2(feature_ll, feature_detail)
         out_enc_level1 = self.encoder_level2(out_enc_level0)+out_enc_level0
         if inp_img is not None:
             out_enc_level1 = self.output(out_enc_level1) + inp_img
@@ -941,5 +1184,5 @@ if __name__ == '__main__':
     height = 128
     width = 128
     window_size = 8
-    modelE = Encoder().cuda()
-    modelD = Decoder().cuda()
+    modelE = Restormer_Encoder().cuda()
+    modelD_1 = Restormer_Decoder_Phase().cuda()
