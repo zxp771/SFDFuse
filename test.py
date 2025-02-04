@@ -12,10 +12,10 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.CRITICAL)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "6"
-ckpt_path=r"models/CDDFuse_02-02-08-34.pth"
+ckpt_path=r"models/SFDFuse_01-09-11-07.pth"
 for dataset_name in ["MSRS","TNO","RoadScene","M3FD"]:
     print("\n"*2+"="*80)
-    model_name="CDDFuse    "
+    model_name="SFDFuse    "
     print("The test result of "+dataset_name+' :')
     test_folder=os.path.join('test_img',dataset_name)
     test_out_folder=os.path.join('test_result',dataset_name)#+'out')
