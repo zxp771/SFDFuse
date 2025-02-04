@@ -109,33 +109,21 @@ which can match the results in Table 1 in our original paper.
 
 ### Illustration of our SFDFuse model.
 
-<img src="image//Workflow.png" width="90%" align=center />
-
-### Qualitative fusion results.
-
-<img src="image//IVF1.png" width="90%" align=center />
-
-<img src="image//IVF2.png" width="90%" align=center />
-
-<img src="image//MIF.png" width="60%" align=center />
+<img src="image//detailedworkflow.png" width="90%" align=center />
 
 ### Quantitative fusion results.
 
 Infrared-Visible Image Fusion
 
-<img src="image//Quantitative_IVF.png" width="60%" align=center />
-
-Medical Image Fusion
-
-<img src="image//Quantitative_MIF.png" width="60%" align=center />
+<img src="image//Qualitatively.png" width="60%" align=center />
 
 MM detection
 
-<img src="image//MMDet.png" width="60%" align=center />
+<img src="image//MMOD.png" width="60%" align=center />
 
 MM segmentation
 
-<img src="image//MMSeg.png" width="60%" align=center />
+<img src="image//MMSS.png" width="60%" align=center />
 
 ## Related Works
 
