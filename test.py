@@ -67,6 +67,7 @@ for dataset_name in ["MSRS","TNO","RoadScene","M3FD"]:
             data_Fuse = (data_Fuse-torch.min(data_Fuse))/(torch.max(data_Fuse)-torch.min(data_Fuse))
             fi = np.squeeze((data_Fuse * 255).cpu().numpy())
             img_save(fi.astype(np.uint8), img_name.split(sep='.')[0], test_out_folder)
+        ######## for RGB fusion results
         # for img_name in os.listdir(os.path.join(test_folder, 'ir')):
         #     data_IR = image_read_cv2(os.path.join(test_folder, "ir", img_name), mode='GRAY')[
         #                   np.newaxis, np.newaxis, ...] / 255.0
