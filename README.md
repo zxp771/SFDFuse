@@ -137,7 +137,7 @@ MM segmentation
 
 <img src="image//MMSeg.png" width="60%" align=center />
 
-## Citation
+## Related Works
 
 ```
 - Zixiang Zhao, Haowen Bai, Jiangshe Zhang, Yulun Zhang, Kai Zhang, Shuang Xu, Dongdong Chen, Radu Timofte, Luc Van Gool. *Equivariant Multi-Modality Image Fusion.* **arXiv:2305.11443**, https://arxiv.org/abs/2305.11443
@@ -153,5 +153,13 @@ MM segmentation
 
 - Li, H., Wu, X.J., Kittler, J., 2021. Rfn-nest: An end-to-end residual fusion network for infrared and visible images. Information Fusion 73, 72–86.
 ```
+
+
+## Citation
+
+```
+
+```
+
 
 
