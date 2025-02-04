@@ -10,11 +10,6 @@ Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Mu
 ## Update
 - [2025/1] Release inference code for infrared-visible image fusion, Training codes and config files are public available.
 
-## Citation
-
-```
-
-```
 
 ## Abstract
 
@@ -66,9 +61,9 @@ Pretrained models are available in ``'./models/SFDFuse_best.pth'`` , which is re
 
 **2. Test datasets**
 
-The test datasets used in the paper have been stored in ``'./test_img/RoadScene'``, ``'./test_img/TNO'`` for IVF, ``'./test_img/MRI_CT'``, ``'./test_img/MRI_PET'`` and ``'./test_img/MRI_SPECT'`` for MIF.
+The test datasets used in the paper have been stored in ``'./test_img/MSRS'``,``'./test_img/RoadScene'``, ``'./test_img/TNO'``,``'./test_img/M3FD'`` for IVF.
 
-Unfortunately, since the size of **MSRS dataset** for IVF is 500+MB, we can not upload it for exhibition. It can be downloaded via [this link](https://github.com/Linfeng-Tang/MSRS). The other datasets contain all the test images.
+Unfortunately, since the size of train and test dataset is over 500+MB, we can not upload them for exhibition. It can be downloaded via the links in data/datasetlink.txt and test_data/datasetlinks.txt.
 
 **3. Results in Our Paper**
 
@@ -142,19 +137,21 @@ MM segmentation
 
 <img src="image//MMSeg.png" width="60%" align=center />
 
+## Citation
 
-## 📖 Related Work
-
+```
 - Zixiang Zhao, Haowen Bai, Jiangshe Zhang, Yulun Zhang, Kai Zhang, Shuang Xu, Dongdong Chen, Radu Timofte, Luc Van Gool. *Equivariant Multi-Modality Image Fusion.* **arXiv:2305.11443**, https://arxiv.org/abs/2305.11443
 
 - Zixiang Zhao, Haowen Bai, Yuanzhi Zhu, Jiangshe Zhang, Shuang Xu, Yulun Zhang, Kai Zhang, Deyu Meng, Radu Timofte, Luc Van Gool.
 *DDFM: Denoising Diffusion Model for Multi-Modality Image Fusion.* **ICCV 2023**, https://arxiv.org/abs/2303.06840
 
-- Zixiang Zhao, Shuang Xu, Chunxia Zhang, Junmin Liu, Jiangshe Zhang and Pengfei Li. *DIDFuse: Deep Image Decomposition for Infrared and Visible Image Fusion.* **IJCAI 2020**, https://www.ijcai.org/Proceedings/2020/135.
+- Zhao, Z., Bai, H., Zhang, J., Zhang, Y., Xu, S., Lin, Z., Timofte, R., Van Gool, L., 2023a. Cddfuse: Correlation-driven dual-branch feature decomposition for multi-modality image fusion, in: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pp.5906–5916.
 
-- Zixiang Zhao, Shuang Xu, Jiangshe Zhang, Chengyang Liang, Chunxia Zhang and Junmin Liu. *Efficient and Model-Based Infrared and Visible Image Fusion via Algorithm Unrolling.* **IEEE Transactions on Circuits and Systems for Video Technology 2021**, https://ieeexplore.ieee.org/document/9416456.
+- Hu, X., Liu, Y., Yang, F., 2024. Pfcfuse: A poolformer and cnn fusion network for infrared-visible image fusion. IEEE Transactions on Instrumentation and Measurement.
 
-- Zixiang Zhao, Jiangshe Zhang, Haowen Bai, Yicheng Wang, Yukun Cui, Lilun Deng, Kai Sun, Chunxia Zhang, Junmin Liu, Shuang Xu. *Deep Convolutional Sparse Coding Networks for Interpretable Image Fusion.* **CVPR Workshop 2023**. https://robustart.github.io/long_paper/26.pdf.
+- Li, H., Wu, X.J., 2024. Crossfuse: A novel cross attention mechanism based infrared and visible image fusion approach. Information Fusion 103,102147.
 
-- Zixiang Zhao, Shuang Xu, Chunxia Zhang, Junmin Liu, Jiangshe Zhang. *Bayesian fusion for infrared and visible images.* **Signal Processing**, https://doi.org/10.1016/j.sigpro.2020.107734.
+- Li, H., Wu, X.J., Kittler, J., 2021. Rfn-nest: An end-to-end residual fusion network for infrared and visible images. Information Fusion 73, 72–86.
+```
+
 
