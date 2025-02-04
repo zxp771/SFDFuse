@@ -6,7 +6,8 @@ Import packages
 ------------------------------------------------------------------------------
 '''
 
-from net import Encoder, Decoder, FeatureInteractionBlock
+from net import Restormer_Encoder, Restormer_Decoder_Phase,FeatureInteractionBlock
+
 from utils.dataset import H5Dataset
 import os
 
@@ -55,8 +56,8 @@ optim_gamma = 0.5
 
 # Model
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-DIDF_Encoder = nn.DataParallel(Encoder()).to(device)
-DIDF_Decoder = nn.DataParallel(Decoder()).to(device)
+DIDF_Encoder = nn.DataParallel(Restormer_Encoder()).to(device)
+DIDF_Decoder_Phase = nn.DataParallel(Restormer_Decoder_Phase()).to(device)
 BaseFuseLayer = nn.DataParallel(FeatureInteractionBlock(dim=64, num_heads=8,init_fusion=True)).to(device)
 DetailFuseLayer = nn.DataParallel(FeatureInteractionBlock(dim=64, num_heads=8,init_fusion=False)).to(device)
 
@@ -64,7 +65,7 @@ DetailFuseLayer = nn.DataParallel(FeatureInteractionBlock(dim=64, num_heads=8,in
 optimizer1 = torch.optim.Adam(
     DIDF_Encoder.parameters(), lr=lr, weight_decay=weight_decay)
 optimizer2 = torch.optim.Adam(
-    DIDF_Decoder.parameters(), lr=lr, weight_decay=weight_decay)
+    DIDF_Decoder_Phase.parameters(), lr=lr, weight_decay=weight_decay)
 optimizer3 = torch.optim.Adam(
     BaseFuseLayer.parameters(), lr=lr, weight_decay=weight_decay)
 optimizer4 = torch.optim.Adam(
@@ -110,12 +111,12 @@ for epoch in range(num_epochs):
     for i, (data_VIS, data_IR) in enumerate(loader['train']):
         data_VIS, data_IR = data_VIS.cuda(), data_IR.cuda()
         DIDF_Encoder.train()
-        DIDF_Decoder.train()
+        DIDF_Decoder_Phase.train()
         BaseFuseLayer.train()
         DetailFuseLayer.train()
 
         DIDF_Encoder.zero_grad()
-        DIDF_Decoder.zero_grad()
+        DIDF_Decoder_Phase.zero_grad()
         BaseFuseLayer.zero_grad()
         DetailFuseLayer.zero_grad()
         # FuseLayer.zero_grad()
@@ -130,8 +131,8 @@ for epoch in range(num_epochs):
             feature_VIS_ll, feature_VIS_detail = DIDF_Encoder(data_VIS)
             feature_I_ll, feature_I_detail = DIDF_Encoder(data_IR)
 
-            data_VIS_hat, feature_vis_hat = DIDF_Decoder(data_VIS, feature_VIS_ll, feature_VIS_detail)
-            data_IR_hat, feature_ir_hat = DIDF_Decoder(data_IR, feature_I_ll, feature_VIS_detail)
+            data_VIS_hat, feature_vis_hat = DIDF_Decoder_Phase(data_VIS, feature_VIS_ll, feature_VIS_detail)
+            data_IR_hat, feature_ir_hat = DIDF_Decoder_Phase(data_IR, feature_I_ll, feature_VIS_detail)
 
             cc_loss_B = cc(feature_VIS_ll, feature_I_ll)
             cc_loss_D = cc(feature_VIS_detail, feature_I_detail)
@@ -160,7 +161,7 @@ for epoch in range(num_epochs):
             feature_F_detail = DetailFuseLayer(feature_VIS_detail,feature_I_detail)
             #feature_F_detail = DetailFuseLayer(feature_VIS_detail, feature_I_detail)
 
-            data_Fuse, feature_F = DIDF_Decoder(data_VIS, feature_F_ll, feature_F_detail)
+            data_Fuse, feature_F = DIDF_Decoder_Phase(data_VIS, feature_F_ll, feature_F_detail)
 
             mse_loss_V = 5 * Loss_ssim(data_VIS, data_Fuse) + MSELoss(data_VIS, data_Fuse)#5*ssim
             mse_loss_I = 5 * Loss_ssim(data_IR, data_Fuse) + MSELoss(data_IR, data_Fuse)
@@ -237,7 +238,7 @@ for epoch in range(num_epochs):
 if True:
     checkpoint = {
         'DIDF_Encoder': DIDF_Encoder.state_dict(),
-        'DIDF_Decoder': DIDF_Decoder.state_dict(),
+        'DIDF_Decoder_Phase': DIDF_Decoder_Phase.state_dict(),
         'BaseFuseLayer': BaseFuseLayer.state_dict(),
         'DetailFuseLayer': DetailFuseLayer.state_dict(),
     }
