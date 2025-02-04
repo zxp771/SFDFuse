@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.CRITICAL)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "6"
-ckpt_path=r"models/SFDFuse_01-09-11-07.pth"
+ckpt_path=r"models/SFDFuse_best.pth"
 for dataset_name in ["MSRS","TNO","RoadScene","M3FD"]:
     print("\n"*2+"="*80)
     model_name="SFDFuse    "
