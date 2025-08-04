@@ -132,9 +132,6 @@ MM segmentation
 ```
 - Zixiang Zhao, Haowen Bai, Jiangshe Zhang, Yulun Zhang, Kai Zhang, Shuang Xu, Dongdong Chen, Radu Timofte, Luc Van Gool. *Equivariant Multi-Modality Image Fusion.* **arXiv:2305.11443**, https://arxiv.org/abs/2305.11443
 
-- Zixiang Zhao, Haowen Bai, Yuanzhi Zhu, Jiangshe Zhang, Shuang Xu, Yulun Zhang, Kai Zhang, Deyu Meng, Radu Timofte, Luc Van Gool.
-*DDFM: Denoising Diffusion Model for Multi-Modality Image Fusion.* **ICCV 2023**, https://arxiv.org/abs/2303.06840
-
 - Zhao, Z., Bai, H., Zhang, J., Zhang, Y., Xu, S., Lin, Z., Timofte, R., Van Gool, L., 2023a. Cddfuse: Correlation-driven dual-branch feature decomposition for multi-modality image fusion, in: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pp.5906–5916.
 
 - Hu, X., Liu, Y., Yang, F., 2024. Pfcfuse: A poolformer and cnn fusion network for infrared-visible image fusion. IEEE Transactions on Instrumentation and Measurement.
@@ -142,6 +139,13 @@ MM segmentation
 - Li, H., Wu, X.J., 2024. Crossfuse: A novel cross attention mechanism based infrared and visible image fusion approach. Information Fusion 103,102147.
 
 - Li, H., Wu, X.J., Kittler, J., 2021. Rfn-nest: An end-to-end residual fusion network for infrared and visible images. Information Fusion 73, 72–86.
+
+-Chen X, Xu S, Hu S, et al. ACFNet: An adaptive cross-fusion network for infrared and visible image fusion. Pattern Recognition, 2025, 159: 111098.
+
+-Li J, Wang Y, Ning X, et al. FefDM-Transformer: Dual-channel multi-stage Transformer-based encoding and fusion mode for infrared–visible images. Expert Systems with Applications, 2025, 277: 127229.
+
+-Liu T, Chen B, Wang B, et al. MDOFusion: A visible and infrared image fusion method based on multi-dimensional quantification allocation and dual optimization mechanism[J]. Expert Systems with Applications, 2025, 280: 127463.
+
 ```
 
 
