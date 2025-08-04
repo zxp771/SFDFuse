@@ -1,5 +1,5 @@
 # SFDFuse
-Codes for ***SFDFuse: SFDFuse:Spatial and Frequency Feature Decomposition for Multi-Modality Image Fusion.***
+Codes for ***SFDFuse: Spatial and Frequency Feature Decomposition for Visible and Infrared Image Fusion.***
 
 [Xupei Zhang](https:///)
 -[*[Paper]*]()  
