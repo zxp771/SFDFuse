@@ -66,7 +66,7 @@ Unfortunately, since the size of train and test dataset is over 500+MB, we can n
 
 **3. Results in Our Paper**
 
-If you want to infer with our CDDFuse and obtain the fusion results in our paper, please run 
+If you want to infer with our SFDFuse and obtain the fusion results in our paper, please run 
 ```
 python test.py
 ``` 
