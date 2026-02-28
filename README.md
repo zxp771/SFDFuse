@@ -122,11 +122,11 @@ which can match the results in Table 1 in our original paper.
 
 Infrared-Visible Image Fusion
 
-<img src="test_result//Qualitatively_MSRS.png" width="60%" align=center />
-<img src="test_result//Qualitatively_TNO.png" width="60%" align=center />
-<img src="test_result//Qualitatively_RoadScene.png" width="60%" align=center />
-<img src="test_result//Qualitatively_M3FD.png" width="60%" align=center />
-<img src="test_result//Qualitatively_LLVIP.png" width="60%" align=center />
+<img src="image//Qualitatively_MSRS.png" width="60%" align=center />
+<img src="image//Qualitatively_TNO.png" width="60%" align=center />
+<img src="image//Qualitatively_RoadScene.png" width="60%" align=center />
+<img src="image//Qualitatively_M3FD.png" width="60%" align=center />
+<img src="image//Qualitatively_LLVIP.png" width="60%" align=center />
 
 MM detection
 
