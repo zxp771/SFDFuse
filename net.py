@@ -448,7 +448,7 @@ class DEBlockTrain(nn.Module):
         res = res + x
         return res
 
-class GLFusion(nn.Module):
+class CGAFusion(nn.Module):
     def __init__(self, dim, reduction=8):
         super(CGAFusion, self).__init__()
         self.sa = SpatialAttention()
@@ -1186,3 +1186,4 @@ if __name__ == '__main__':
     window_size = 8
     modelE = Restormer_Encoder().cuda()
     modelD_1 = Restormer_Decoder_Phase().cuda()
+
