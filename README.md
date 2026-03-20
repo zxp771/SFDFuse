@@ -130,11 +130,11 @@ Infrared-Visible Image Fusion
 
 MM detection
 
-<img src="image//MMOD.png" width="60%" align=center />
+<img src="image//MMOD.png" width="70%" align=center />
 
 MM segmentation
 
-<img src="image//MMSS.png" width="60%" align=center />
+<img src="image//MMSS.png" width="70%" align=center />
 
 ## Related Works
 
